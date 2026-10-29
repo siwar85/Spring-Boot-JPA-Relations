@@ -15,7 +15,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
                 description = "API REST de gestion de location de véhicules.",
                 contact = @Contact(
                         name = "Équipe AutoLoc",
-                        email = "VOTRE.ADRESSE@outlook.com",
+                        email = "siwar.soltani@esprit.tn",
                         url = "https://github.com/siwar85"
                 )
         ),
