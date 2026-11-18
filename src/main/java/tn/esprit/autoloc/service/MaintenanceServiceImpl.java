@@ -2,9 +2,12 @@ package tn.esprit.autoloc.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.autoloc.domain.Maintenance;
+import tn.esprit.autoloc.domain.Vehicule;
 import tn.esprit.autoloc.exception.ResourceNotFoundException;
 import tn.esprit.autoloc.repository.IMaintenanceRepository;
+import tn.esprit.autoloc.repository.IVehiculeRepository;
 
 import java.util.List;
 
@@ -13,6 +16,7 @@ import java.util.List;
 public class MaintenanceServiceImpl implements IMaintenanceService {
 
     private final IMaintenanceRepository maintenanceRepository;
+    private final IVehiculeRepository vehiculeRepository;
 
     @Override
     public Maintenance create(Maintenance maintenance) {
@@ -51,6 +55,31 @@ public class MaintenanceServiceImpl implements IMaintenanceService {
             throw new ResourceNotFoundException("Maintenance", id);
         }
         maintenanceRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public Maintenance affecterMaintenanceAVehicule(Long idMaintenance, Long idVehicule) {
+        if (idMaintenance == null || idVehicule == null) {
+            throw new IllegalArgumentException(
+                    "Les identifiants de la maintenance et du véhicule sont obligatoires");
+        }
+
+        // 404 si l'un des deux n'existe pas
+        Maintenance maintenance = findById(idMaintenance);
+        Vehicule vehicule = vehiculeRepository.findById(idVehicule)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicule", idVehicule));
+
+        // Déjà affectée à ce véhicule ?
+        if (maintenance.getVehicule() != null
+                && maintenance.getVehicule().getIdVehicule().equals(idVehicule)) {
+            throw new IllegalArgumentException(
+                    "La maintenance est déjà affectée à ce véhicule");
+        }
+
+        // Maintenance porte la clé étrangère : on pose le lien de ce côté
+        maintenance.setVehicule(vehicule);
+        return maintenanceRepository.save(maintenance);
     }
 
     private void verifierDates(Maintenance maintenance) {
